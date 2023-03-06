@@ -1,0 +1,62 @@
+#include <ThingerESP8266.h>
+#include <ESP8266WiFi.h>
+
+#define USERNAME "FlameSensor"
+#define DEVICE_ID "nodemcu_flamesensor"
+#define DEVICE_CREDENTIAL "hN&XKPRXmgHNV3+R"
+
+ThingerESP8266 thing(USERNAME, DEVICE_ID, DEVICE_CREDENTIAL);
+
+const char* ssid = "wifi_nyasar";
+const char* password = "#joeChan4";
+
+String Kondisi = "";
+
+#define Flame_PIN 5
+#define Buzzer_PIN 2
+#define Led_PIN 4
+
+unsigned long previusMillis = 0;
+const long interval = 5000;
+
+
+
+void setup() {
+ Serial.begin (9600);
+ pinMode(Flame_PIN, INPUT);
+ pinMode(Buzzer_PIN, OUTPUT);
+ pinMode(Led_PIN, OUTPUT);
+ WiFi.begin(ssid,password);
+ while (WiFi.status () != WL_CONNECTED)
+ {
+  delay(500);
+  digitalWrite (Led_PIN, LOW);
+  }
+  digitalWrite (Led_PIN, HIGH);
+  thing.add_wifi(ssid, password);
+  thing["DATAKU"] >> [](pson & out)
+  {
+    out ["Kondisi"] = Kondisi
+    };
+}
+
+void loop() {
+  
+  unsigned currentMillis= millis();
+  if (currentMillis - previusMillis >= interval)
+  {
+    previusMillis = currentMillis;
+      int api = digitalRead(Flame_PIN);
+      if (api == 1){
+        digitalWrite (Buzzer_PIN, HIGH);
+        Kondisi = "KEBAKARAN"; 
+        thing.call_endpoint("DETEKSI API");
+        }
+        else{
+          digitalWrite (Buzzer_PIN, LOW);
+          Kondisi = "AMAN";
+          }
+      thing.handle();
+    }
+
+}
